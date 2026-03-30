@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serenity — Meditation App</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sage:#7a9e7e;--sage-l:#b8d4bb;--sage-p:#e8f0e9;
+  --stone:#8b7e74;--stone-l:#c4b8b2;--stone-p:#f0ece8;
+  --night:#1a1f2e;--night-m:#252b3d;--night-s:#2f3650;
+  --cream:#faf7f2;--gold:#c9a96e;--gold-s:#e8d4a8;
+  --white:#ffffff;--text:#1a1f2e;--muted:#6b7280;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);overflow-x:hidden}
+::-webkit-scrollbar{width:0}
+
+/* SCREENS */
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;background:rgba(250,247,242,0.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(139,126,116,0.12);position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.08em;color:var(--night)}
+.nav-logo span{color:var(--sage)}
+.nav-right{display:flex;align-items:center;gap:1.5rem}
+.nav-streak{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--stone)}
+.streak-flame{width:14px;height:14px;background:linear-gradient(135deg,#f97316,#ef4444);border-radius:50% 50% 50% 10%;transform:rotate(-30deg)}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--sage-l));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:white}
+
+/* SECTIONS */
+.section{padding:1rem 1.5rem}
+.sec-label{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--stone);margin-bottom:0.75rem;font-weight:400}
+
+/* GREETING */
+.greeting{padding:1.75rem 1.5rem 0.75rem}
+.g-time{font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:var(--stone);margin-bottom:6px}
+.g-text{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:300;line-height:1.1;color:var(--night)}
+.g-text em{color:var(--sage);font-style:italic}
+
+/* MOOD */
+.mood-row{display:flex;gap:10px;flex-wrap:wrap}
+.mood-pill{padding:8px 16px;border-radius:999px;border:1px solid rgba(139,126,116,0.25);font-size:13px;color:var(--stone);background:white;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+.mood-pill:hover{border-color:var(--sage);color:var(--sage)}
+.mood-pill.active{background:var(--sage);border-color:var(--sage);color:white}
+.mood-dot{width:8px;height:8px;border-radius:50%}
+
+/* FEATURED */
+.feat-card{background:linear-gradient(135deg,var(--night) 0%,var(--night-m) 60%,#1e3a2f 100%);border-radius:24px;padding:2rem;position:relative;overflow:hidden;cursor:pointer;transition:transform 0.3s}
+.feat-card:hover{transform:translateY(-2px)}
+.orb{position:absolute;border-radius:50%;animation:float 6s ease-in-out infinite}
+.orb1{right:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(122,158,126,0.35) 0%,transparent 70%)}
+.orb2{left:40%;bottom:-60px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,169,110,0.2) 0%,transparent 70%);animation-duration:8s;animation-direction:reverse}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.04)}}
+.feat-tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:var(--sage-l);background:rgba(122,158,126,0.2);padding:4px 12px;border-radius:999px;margin-bottom:1rem}
+.feat-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:white;line-height:1.2;margin-bottom:0.5rem}
+.feat-sub{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:1.5rem;font-weight:300}
+.feat-meta{display:flex;align-items:center;gap:1rem}
+.play-btn{width:44px;height:44px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s;border:none;flex-shrink:0}
+.play-btn:hover{transform:scale(1.08)}
+.play-icon{width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:13px solid var(--night);margin-left:3px}
+.feat-dur{font-size:13px;color:rgba(255,255,255,0.6);font-weight:300}
+
+/* BREATHE */
+.breathe-card{background:white;border-radius:24px;padding:1.75rem;border:1px solid rgba(139,126,116,0.1);display:flex;align-items:center;gap:1.5rem}
+.breathe-vis{position:relative;width:80px;height:80px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.b-ring{width:80px;height:80px;border-radius:50%;border:2px solid rgba(122,158,126,0.2);position:absolute}
+.b-circle{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,var(--sage-l),var(--sage));position:absolute;animation:breathe 4s ease-in-out infinite}
+.b-pulse{width:80px;height:80px;border-radius:50%;border:1.5px solid var(--sage-l);position:absolute;animation:bpulse 4s ease-in-out infinite;opacity:0}
+@keyframes breathe{0%,100%{transform:scale(0.7);opacity:0.7}50%{transform:scale(1.1);opacity:1}}
+@keyframes bpulse{0%{transform:scale(0.6);opacity:0}40%{opacity:0.5}100%{transform:scale(1.4);opacity:0}}
+.breathe-info{flex:1}
+.breathe-title{font-size:15px;font-weight:500;color:var(--night);margin-bottom:3px}
+.breathe-phase{font-size:12px;color:var(--sage);font-weight:400;margin-bottom:8px;min-height:16px}
+.breathe-prog{height:3px;background:var(--sage-p);border-radius:999px;overflow:hidden}
+.breathe-bar{height:100%;background:var(--sage);border-radius:999px;width:0%}
+.breathe-btn{padding:8px 18px;background:var(--sage-p);color:var(--sage);border:none;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;flex-shrink:0}
+.breathe-btn:hover{background:var(--sage-l);color:white}
+
+/* SESSION GRID */
+.sessions-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sess-card{background:white;border-radius:20px;padding:1.25rem;border:1px solid rgba(139,126,116,0.1);cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.sess-card:hover{transform:translateY(-2px);border-color:rgba(122,158,126,0.4)}
+.sess-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0}
+.sess-card.sage::before{background:linear-gradient(90deg,var(--sage),var(--sage-l))}
+.sess-card.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold-s))}
+.sess-card.stone::before{background:linear-gradient(90deg,var(--stone),var(--stone-l))}
+.sess-card.night::before{background:linear-gradient(90deg,var(--night),var(--night-s))}
+.sess-icon{width:36px;height:36px;border-radius:12px;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:center}
+.sess-card.sage .sess-icon{background:var(--sage-p)}
+.sess-card.gold .sess-icon{background:#fdf5e6}
+.sess-card.stone .sess-icon{background:#f4f0ed}
+.sess-card.night .sess-icon{background:#e8eaf2}
+.sess-name{font-size:13px;font-weight:500;color:var(--night);margin-bottom:4px;line-height:1.3}
+.sess-dur{font-size:11px;color:var(--stone);font-weight:300}
+
+/* TRACKER */
+.tracker-card{background:var(--night);border-radius:24px;padding:1.5rem;color:white}
+.tracker-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.tracker-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:white}
+.tracker-num{font-size:22px;font-weight:500;color:var(--sage-l)}
+.tracker-lbl{font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.1em}
+.days-row{display:flex;gap:8px;justify-content:space-between}
+.day-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.day-lbl{font-size:10px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.05em}
+.day-bar-wrap{height:60px;display:flex;align-items:flex-end;width:100%;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden}
+.day-bar{width:100%;border-radius:6px}
+.day-col.done .day-bar{background:linear-gradient(to top,var(--sage),var(--sage-l))}
+.day-col.today .day-bar{background:linear-gradient(to top,var(--gold),var(--gold-s))}
+.day-col.future .day-bar{background:rgba(255,255,255,0.08)}
+.day-dot{width:5px;height:5px;border-radius:50%}
+.day-col.done .day-dot{background:var(--sage-l)}
+.day-col.today .day-dot{background:var(--gold)}
+.day-col.future .day-dot{background:rgba(255,255,255,0.15)}
+
+/* BOTTOM NAV */
+.bottom-nav{background:rgba(250,247,242,0.95);backdrop-filter:blur(12px);padding:0.75rem 1.5rem 1rem;display:flex;justify-content:space-around;border-top:1px solid rgba(139,126,116,0.1);margin-top:auto}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1}
+.nav-item-lbl{font-size:10px;color:var(--stone);text-transform:uppercase;letter-spacing:0.08em}
+.nav-item.active .nav-item-lbl{color:var(--sage)}
+.nav-icon-wrap{width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+
+/* TIMER SCREEN */
+#timerScreen{background:var(--cream)}
+.timer-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid rgba(139,126,116,0.1)}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--stone);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0}
+.back-btn:hover{color:var(--sage)}
+.timer-screen-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--night)}
+.timer-content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;gap:2rem}
+.duration-pills{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.dur-pill{padding:10px 22px;border-radius:999px;border:1px solid rgba(139,126,116,0.25);font-size:14px;color:var(--stone);background:white;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.dur-pill:hover{border-color:var(--sage);color:var(--sage)}
+.dur-pill.active{background:var(--sage);border-color:var(--sage);color:white}
+.timer-ring-wrap{position:relative;width:220px;height:220px;display:flex;align-items:center;justify-content:center}
+.timer-svg{position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg)}
+.timer-track{fill:none;stroke:rgba(122,158,126,0.15);stroke-width:6}
+.timer-progress{fill:none;stroke:var(--sage);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.timer-center{display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1}
+.timer-digits{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:var(--night);line-height:1;letter-spacing:-0.02em}
+.timer-phase-lbl{font-size:12px;color:var(--sage);text-transform:uppercase;letter-spacing:0.12em;margin-top:6px;font-weight:400;min-height:16px}
+.timer-controls{display:flex;align-items:center;gap:1.5rem}
+.ctrl-btn{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.ctrl-btn.secondary{background:rgba(139,126,116,0.12);color:var(--stone)}
+.ctrl-btn.secondary:hover{background:rgba(139,126,116,0.22)}
+.ctrl-btn.primary{background:var(--sage);width:68px;height:68px}
+.ctrl-btn.primary:hover{background:#6a8e6e;transform:scale(1.05)}
+.play-tri{width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:16px solid white;margin-left:4px}
+.pause-icon{display:flex;gap:4px}
+.pause-bar{width:4px;height:18px;background:white;border-radius:2px}
+.phases-list{width:100%;max-width:320px}
+.phase-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(139,126,116,0.1)}
+.phase-item:last-child{border-bottom:none}
+.phase-dot{width:8px;height:8px;border-radius:50%;background:rgba(139,126,116,0.2);flex-shrink:0;transition:background 0.4s}
+.phase-dot.active{background:var(--sage)}
+.phase-dot.done{background:var(--sage-l)}
+.phase-item-name{font-size:13px;color:var(--stone);flex:1;transition:color 0.4s}
+.phase-item-name.active{color:var(--night);font-weight:500}
+.phase-item-dur{font-size:12px;color:var(--stone-l)}
+
+/* SESSION SCREEN */
+#sessionScreen{background:var(--night)}
+.session-bg{position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;overflow:hidden;pointer-events:none}
+.sess-orb{position:absolute;border-radius:50%;animation:float 7s ease-in-out infinite}
+.sess-orb.a{width:300px;height:300px;top:-80px;right:-80px;background:radial-gradient(circle,rgba(122,158,126,0.25) 0%,transparent 70%)}
+.sess-orb.b{width:200px;height:200px;bottom:10%;left:-60px;background:radial-gradient(circle,rgba(201,169,110,0.15) 0%,transparent 70%);animation-duration:9s;animation-direction:reverse}
+.sess-orb.c{width:150px;height:150px;bottom:30%;right:10%;background:radial-gradient(circle,rgba(122,158,126,0.12) 0%,transparent 70%);animation-duration:5s}
+.sess-header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem}
+.sess-close{background:rgba(255,255,255,0.1);border:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s}
+.sess-close:hover{background:rgba(255,255,255,0.2)}
+.sess-close-x{font-size:18px;color:white;line-height:1}
+.sess-title-small{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:300;color:rgba(255,255,255,0.7)}
+.sess-main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;gap:1.5rem}
+.sess-phase-tag{font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:var(--sage-l);background:rgba(122,158,126,0.2);padding:5px 16px;border-radius:999px}
+.sess-breathe-wrap{position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center}
+.sess-ring-outer{position:absolute;width:180px;height:180px;border-radius:50%;border:1px solid rgba(122,158,126,0.2)}
+.sess-ring-mid{position:absolute;width:140px;height:140px;border-radius:50%;border:1px solid rgba(122,158,126,0.15)}
+.sess-core{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(184,212,187,0.9),rgba(122,158,126,0.7));position:absolute;animation:sessbreath 8s ease-in-out infinite}
+.sess-glow{width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(122,158,126,0.2) 0%,transparent 70%);position:absolute;animation:sessglow 8s ease-in-out infinite}
+@keyframes sessbreath{0%,100%{transform:scale(0.75);opacity:0.8}50%{transform:scale(1);opacity:1}}
+@keyframes sessglow{0%,100%{transform:scale(0.8);opacity:0.4}50%{transform:scale(1.1);opacity:0.8}}
+.sess-instruction{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:white;text-align:center;line-height:1.3;min-height:70px;transition:opacity 0.5s}
+.sess-progress-wrap{width:100%;max-width:280px}
+.sess-prog-bar{height:2px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;margin-bottom:8px}
+.sess-prog-fill{height:100%;background:linear-gradient(90deg,var(--sage),var(--sage-l));border-radius:999px;transition:width 1s linear}
+.sess-prog-labels{display:flex;justify-content:space-between}
+.sess-elapsed{font-size:12px;color:rgba(255,255,255,0.5)}
+.sess-remaining{font-size:12px;color:rgba(255,255,255,0.5)}
+.sess-controls{display:flex;align-items:center;gap:1.5rem}
+.sess-ctrl{width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s}
+.sess-ctrl:hover{background:rgba(255,255,255,0.15)}
+.sess-ctrl.main{width:64px;height:64px;background:rgba(122,158,126,0.6);border-color:rgba(122,158,126,0.8)}
+.sess-ctrl.main:hover{background:rgba(122,158,126,0.8)}
+.sess-ctrl-play{width:0;height:0;border-top:9px solid transparent;border-bottom:9px solid transparent;border-left:14px solid white;margin-left:3px}
+.sess-ctrl-pause{display:flex;gap:4px}
+.sess-ctrl-pause span{width:3px;height:16px;background:white;border-radius:2px}
+.sess-phases-mini{display:flex;gap:8px;justify-content:center}
+.mini-phase{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.15);transition:background 0.4s}
+.mini-phase.active{background:var(--sage-l)}
+.mini-phase.done{background:rgba(122,158,126,0.5)}
+
+/* COMPLETE */
+.sess-complete{display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem;text-align:center;flex:1;position:relative;z-index:1}
+.complete-icon{width:80px;height:80px;border-radius:50%;background:rgba(122,158,126,0.2);border:1px solid rgba(122,158,126,0.4);display:flex;align-items:center;justify-content:center}
+.complete-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:white}
+.complete-sub{font-size:14px;color:rgba(255,255,255,0.55);font-weight:300;line-height:1.6;max-width:260px}
+.complete-stat{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:1.25rem 2rem;display:flex;gap:2.5rem}
+.c-stat-item{text-align:center}
+.c-stat-num{font-size:24px;font-weight:500;color:var(--sage-l)}
+.c-stat-lbl{font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px}
+.complete-btn{padding:14px 36px;background:var(--sage);color:white;border:none;border-radius:999px;font-size:15px;font-weight:400;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s}
+.complete-btn:hover{background:#6a8e6e}
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div class="screen active" id="homeScreen">
+  <nav>
+    <div class="nav-logo">sere<span>n</span>ity</div>
+    <div class="nav-right">
+      <div class="nav-streak"><div class="streak-flame"></div>7 day streak</div>
+      <div class="nav-avatar">BY</div>
+    </div>
+  </nav>
+
+  <div class="greeting">
+    <div class="g-time" id="timeLabel">Good evening</div>
+    <div class="g-text">How are you<br>feeling <em id="gEm">tonight?</em></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Select your mood</div>
+    <div class="mood-row">
+      <div class="mood-pill" onclick="selectMood(this,'Anxious')"><div class="mood-dot" style="background:#f97316"></div>Anxious</div>
+      <div class="mood-pill" onclick="selectMood(this,'Tired')"><div class="mood-dot" style="background:#8b5cf6"></div>Tired</div>
+      <div class="mood-pill active" onclick="selectMood(this,'Calm')"><div class="mood-dot" style="background:#7a9e7e"></div>Calm</div>
+      <div class="mood-pill" onclick="selectMood(this,'Stressed')"><div class="mood-dot" style="background:#ef4444"></div>Stressed</div>
+      <div class="mood-pill" onclick="selectMood(this,'Grateful')"><div class="mood-dot" style="background:#c9a96e"></div>Grateful</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Recommended for you</div>
+    <div class="feat-card" onclick="openSession()">
+      <div class="orb orb1"></div><div class="orb orb2"></div>
+      <div class="feat-tag">Tonight's session</div>
+      <div class="feat-title" id="featTitle">Deep Rest &<br>Release</div>
+      <div class="feat-sub" id="featSub">A gentle body scan to ease your mind</div>
+      <div class="feat-meta">
+        <button class="play-btn" onclick="openSession(event)"><div class="play-icon"></div></button>
+        <div class="feat-dur">20 min · Guided · Sleep</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Quick breathe</div>
+    <div class="breathe-card">
+      <div class="breathe-vis">
+        <div class="b-ring"></div><div class="b-pulse"></div><div class="b-circle"></div>
+      </div>
+      <div class="breathe-info">
+        <div class="breathe-title">4-7-8 Breathing</div>
+        <div class="breathe-phase" id="breathePhase">Follow the rhythm...</div>
+        <div class="breathe-prog"><div class="breathe-bar" id="breatheBar"></div></div>
+      </div>
+      <button class="breathe-btn" id="breatheBtn" onclick="toggleBreathe()">Start</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Explore sessions</div>
+    <div class="sessions-grid">
+      <div class="sess-card sage" onclick="openSession()">
+        <div class="sess-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#7a9e7e" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="#7a9e7e" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="sess-name">Morning Clarity</div><div class="sess-dur">10 min · Focus</div>
+      </div>
+      <div class="sess-card gold" onclick="openSession()">
+        <div class="sess-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="#c9a96e" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="#c9a96e" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="sess-name">Stress Relief</div><div class="sess-dur">15 min · Calm</div>
+      </div>
+      <div class="sess-card stone" onclick="openTimerScreen()">
+        <div class="sess-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" stroke="#8b7e74" stroke-width="1.5" fill="none"/></svg></div>
+        <div class="sess-name">Silent Timer</div><div class="sess-dur">Custom · Unguided</div>
+      </div>
+      <div class="sess-card night" onclick="openSession()">
+        <div class="sess-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#404880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="sess-name">Deep Sleep</div><div class="sess-dur">30 min · Sleep</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">This week</div>
+    <div class="tracker-card">
+      <div class="tracker-header">
+        <div class="tracker-title">Your Practice</div>
+        <div style="text-align:right"><div class="tracker-num">142</div><div class="tracker-lbl">Minutes total</div></div>
+      </div>
+      <div class="days-row" id="daysRow"></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <div class="nav-icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#7a9e7e" stroke-width="1.5" fill="rgba(122,158,126,0.15)"/></svg></div>
+      <div class="nav-item-lbl">Home</div>
+    </div>
+    <div class="nav-item" onclick="openTimerScreen()">
+      <div class="nav-icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#8b7e74" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="#8b7e74" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="nav-item-lbl">Timer</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="#8b7e74" stroke-width="1.5"/><path d="M16 2v4M8 2v4M3 10h18" stroke="#8b7e74" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="nav-item-lbl">Journal</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon-wrap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#8b7e74" stroke-width="1.5"/><path d="M4 20c0-3.314 3.582-6 8-6s8 2.686 8 6" stroke="#8b7e74" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="nav-item-lbl">Profile</div>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER SCREEN -->
+<div class="screen" id="timerScreen">
+  <div class="timer-header">
+    <button class="back-btn" onclick="goHome()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </button>
+    <div class="timer-screen-title">Silent Timer</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="timer-content">
+    <div>
+      <div class="sec-label" style="text-align:center;margin-bottom:0.75rem">Choose duration</div>
+      <div class="duration-pills">
+        <div class="dur-pill" onclick="setDuration(5,this)">5 min</div>
+        <div class="dur-pill active" onclick="setDuration(10,this)">10 min</div>
+        <div class="dur-pill" onclick="setDuration(15,this)">15 min</div>
+        <div class="dur-pill" onclick="setDuration(20,this)">20 min</div>
+        <div class="dur-pill" onclick="setDuration(30,this)">30 min</div>
+      </div>
+    </div>
+    <div class="timer-ring-wrap">
+      <svg class="timer-svg" viewBox="0 0 220 220">
+        <circle class="timer-track" cx="110" cy="110" r="100"/>
+        <circle class="timer-progress" id="timerRing" cx="110" cy="110" r="100" stroke-dasharray="628" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-digits" id="timerDisplay">10:00</div>
+        <div class="timer-phase-lbl" id="timerPhaseLbl">Ready</div>
+      </div>
+    </div>
+    <div class="timer-controls">
+      <button class="ctrl-btn secondary" onclick="resetTimer()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 109-9 9 9 0 00-9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M3 4v8h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="ctrl-btn primary" id="timerPlayBtn" onclick="toggleTimer()">
+        <div id="timerPlayIcon"><div class="play-tri"></div></div>
+      </button>
+      <button class="ctrl-btn secondary" onclick="openSession()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor" stroke-width="1.5"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="phases-list">
+      <div class="sec-label">Session phases</div>
+      <div class="phase-item">
+        <div class="phase-dot active" id="tdot0"></div>
+        <div class="phase-item-name active" id="tname0">Settle in</div>
+        <div class="phase-item-dur">2 min</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-dot" id="tdot1"></div>
+        <div class="phase-item-name" id="tname1">Deep focus</div>
+        <div class="phase-item-dur">6 min</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-dot" id="tdot2"></div>
+        <div class="phase-item-name" id="tname2">Gentle return</div>
+        <div class="phase-item-dur">2 min</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION SCREEN -->
+<div class="screen" id="sessionScreen">
+  <div class="session-bg">
+    <div class="sess-orb a"></div>
+    <div class="sess-orb b"></div>
+    <div class="sess-orb c"></div>
+  </div>
+  <div class="sess-header">
+    <button class="sess-close" onclick="goHome()"><div class="sess-close-x">✕</div></button>
+    <div class="sess-title-small" id="sessTitle">Deep Rest & Release</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="sess-main" id="sessMain">
+    <div class="sess-phase-tag" id="sessPhaseTag">Introduction</div>
+    <div class="sess-breathe-wrap">
+      <div class="sess-ring-outer"></div>
+      <div class="sess-ring-mid"></div>
+      <div class="sess-glow"></div>
+      <div class="sess-core"></div>
+    </div>
+    <div class="sess-instruction" id="sessInstruction">Find a comfortable position and gently close your eyes...</div>
+    <div class="sess-progress-wrap">
+      <div class="sess-prog-bar"><div class="sess-prog-fill" id="sessProgFill" style="width:0%"></div></div>
+      <div class="sess-prog-labels">
+        <div class="sess-elapsed" id="sessElapsed">0:00</div>
+        <div class="sess-remaining" id="sessRemaining">20:00</div>
+      </div>
+    </div>
+    <div class="sess-controls">
+      <div class="sess-ctrl" onclick="prevSessPhase()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/></svg>
+      </div>
+      <div class="sess-ctrl main" id="sessPlayBtn" onclick="toggleSession()">
+        <div id="sessPlayIcon"><div class="sess-ctrl-play"></div></div>
+      </div>
+      <div class="sess-ctrl" onclick="nextSessPhase()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 19l7-7-7-7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/></svg>
+      </div>
+    </div>
+    <div class="sess-phases-mini" id="sessMiniPhases"></div>
+  </div>
+  <div class="sess-complete" id="sessComplete">
+    <div class="complete-icon">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="15" stroke="#7a9e7e" stroke-width="1.5"/>
+        <path d="M10 16l4 4 8-8" stroke="#7a9e7e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="complete-title">Well done, Bayim</div>
+    <div class="complete-sub">You've completed your session. Take a moment to notice how you feel right now.</div>
+    <div class="complete-stat">
+      <div class="c-stat-item"><div class="c-stat-num" id="compDur">20</div><div class="c-stat-lbl">Minutes</div></div>
+      <div class="c-stat-item"><div class="c-stat-num">4</div><div class="c-stat-lbl">Phases</div></div>
+      <div class="c-stat-item"><div class="c-stat-num">8</div><div class="c-stat-lbl">Day streak</div></div>
+    </div>
+    <button class="complete-btn" onclick="goHome()">Return home</button>
+  </div>
+</div>
+
+<script>
+// GREETING
+const hr = new Date().getHours();
+const timeEl = document.getElementById('timeLabel');
+const emEl = document.getElementById('gEm');
+if(hr>=5&&hr<12){timeEl.textContent='Good morning';emEl.textContent='this morning?'}
+else if(hr>=12&&hr<17){timeEl.textContent='Good afternoon';emEl.textContent='this afternoon?'}
+else{timeEl.textContent='Good evening';emEl.textContent='tonight?'}
+
+// MOOD
+const moodRecs={
+  Anxious:{title:'Calm &<br>Ground',sub:'Release tension, breath by breath'},
+  Tired:{title:'Restore &<br>Renew',sub:'Gentle energy reset for body and mind'},
+  Calm:{title:'Deep Rest &<br>Release',sub:'A gentle body scan to ease your mind'},
+  Stressed:{title:'Stress Relief<br>Flow',sub:'Let go of what you cannot control'},
+  Grateful:{title:'Open Heart<br>Practice',sub:'Expand warmth and loving kindness'}
+};
+function selectMood(el,mood){
+  document.querySelectorAll('.mood-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  const r=moodRecs[mood];
+  document.getElementById('featTitle').innerHTML=r.title;
+  document.getElementById('featSub').textContent=r.sub;
+}
+
+// BREATHE
+let breathing=false,breatheT,bPhase=0;
+const bPhases=[{t:'Inhale slowly...',d:4000},{t:'Hold gently...',d:7000},{t:'Exhale fully...',d:8000}];
+function toggleBreathe(){
+  breathing=!breathing;
+  document.getElementById('breatheBtn').textContent=breathing?'Pause':'Start';
+  if(breathing)runBreath();
+  else{clearTimeout(breatheT);document.getElementById('breathePhase').textContent='Follow the rhythm...';}
+}
+function runBreath(){
+  if(!breathing)return;
+  const p=bPhases[bPhase%3];
+  document.getElementById('breathePhase').textContent=p.t;
+  bPhase++;
+  breatheT=setTimeout(runBreath,p.d);
+}
+
+// TRACKER
+const days=['M','T','W','T','F','S','S'];
+const heights=[80,60,90,45,70,0,0];
+const todayIdx=new Date().getDay()===0?6:new Date().getDay()-1;
+const row=document.getElementById('daysRow');
+days.forEach((d,i)=>{
+  const type=i<todayIdx?'done':i===todayIdx?'today':'future';
+  const h=type==='future'?15:heights[i]||15;
+  const col=document.createElement('div');
+  col.className='day-col '+type;
+  col.innerHTML=`<div class="day-dot"></div><div class="day-bar-wrap"><div class="day-bar" style="height:${h}%"></div></div><div class="day-lbl">${d}</div>`;
+  row.appendChild(col);
+});
+
+// SCREEN NAV
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goHome(){stopSession();stopTimer();showScreen('homeScreen')}
+function openTimerScreen(){showScreen('timerScreen')}
+
+// TIMER
+let timerDuration=10*60,timerRemaining=10*60,timerRunning=false,timerInterval;
+const circumference=2*Math.PI*100;
+function setDuration(mins,el){
+  document.querySelectorAll('.dur-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  timerDuration=mins*60;timerRemaining=mins*60;
+  updateTimerDisplay();
+  document.getElementById('timerRing').style.strokeDashoffset=0;
+  document.getElementById('timerPhaseLbl').textContent='Ready';
+  stopTimer();resetPhaseHighlight();
+}
+function fmt(s){const m=Math.floor(s/60);const sec=s%60;return m+':'+(sec<10?'0':'')+sec}
+function updateTimerDisplay(){document.getElementById('timerDisplay').textContent=fmt(timerRemaining)}
+function toggleTimer(){
+  timerRunning=!timerRunning;
+  const icon=document.getElementById('timerPlayIcon');
+  if(timerRunning){
+    icon.innerHTML='<div class="pause-icon"><div class="pause-bar"></div><div class="pause-bar"></div></div>';
+    document.getElementById('timerPhaseLbl').textContent='Settle in...';
+    timerInterval=setInterval(tickTimer,1000);
+  }else{
+    icon.innerHTML='<div class="play-tri"></div>';
+    clearInterval(timerInterval);
+  }
+}
+function stopTimer(){
+  timerRunning=false;clearInterval(timerInterval);
+  const icon=document.getElementById('timerPlayIcon');
+  if(icon)icon.innerHTML='<div class="play-tri"></div>';
+}
+function resetTimer(){
+  stopTimer();timerRemaining=timerDuration;
+  updateTimerDisplay();
+  document.getElementById('timerRing').style.strokeDashoffset=0;
+  document.getElementById('timerPhaseLbl').textContent='Ready';
+  resetPhaseHighlight();
+}
+function tickTimer(){
+  timerRemaining--;
+  updateTimerDisplay();
+  const pct=1-(timerRemaining/timerDuration);
+  document.getElementById('timerRing').style.strokeDashoffset=circumference*pct;
+  updateTimerPhase(pct);
+  if(timerRemaining<=0){stopTimer();document.getElementById('timerPhaseLbl').textContent='Complete ✓';}
+}
+function resetPhaseHighlight(){
+  for(let i=0;i<3;i++){
+    document.getElementById('tdot'+i).className='phase-dot'+(i===0?' active':'');
+    document.getElementById('tname'+i).className='phase-item-name'+(i===0?' active':'');
+  }
+}
+function updateTimerPhase(pct){
+  const pi=pct<0.2?0:pct<0.8?1:2;
+  const phases=['Settle in...','Deep focus...','Gentle return...'];
+  document.getElementById('timerPhaseLbl').textContent=phases[pi];
+  for(let i=0;i<3;i++){
+    const dot=document.getElementById('tdot'+i);
+    const name=document.getElementById('tname'+i);
+    if(i<pi){dot.className='phase-dot done';name.className='phase-item-name';}
+    else if(i===pi){dot.className='phase-dot active';name.className='phase-item-name active';}
+    else{dot.className='phase-dot';name.className='phase-item-name';}
+  }
+}
+
+// GUIDED SESSION
+const sessionPhases=[
+  {tag:'Introduction',instructions:['Find a comfortable position and gently close your eyes...','Take a long, slow breath in through your nose...','Let your body begin to soften and release...']},
+  {tag:'Body Awareness',instructions:['Bring your attention to the top of your head...','Feel any tension dissolving with each exhale...','Let your shoulders drop away from your ears...','Notice the rhythm of your natural breath...']},
+  {tag:'Deep Release',instructions:['Sink deeper with every slow exhale...','There is nowhere to be, nothing to do...','Let each thought drift past like a cloud...','Your body is heavy, warm, completely at rest...']},
+  {tag:'Gentle Return',instructions:['Begin to bring gentle awareness back to the room...','Wiggle your fingers and toes slowly...','When you are ready, softly open your eyes...','Carry this stillness with you into your evening...']}
+];
+let sessPlaying=false,sessCurPhase=0,sessInstrIdx=0,sessInterval,sessTotal=20*60,sessElapsedSecs=0;
+
+function buildMiniPhases(){
+  const wrap=document.getElementById('sessMiniPhases');
+  wrap.innerHTML='';
+  sessionPhases.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='mini-phase'+(i===0?' active':'');
+    d.id='mini'+i;
+    wrap.appendChild(d);
+  });
+}
+function openSession(e){
+  if(e)e.stopPropagation();
+  buildMiniPhases();
+  sessCurPhase=0;sessInstrIdx=0;sessElapsedSecs=0;sessPlaying=false;
+  document.getElementById('sessComplete').style.display='none';
+  document.getElementById('sessMain').style.display='flex';
+  const icon=document.getElementById('sessPlayIcon');
+  if(icon)icon.innerHTML='<div class="sess-ctrl-play"></div>';
+  updateSessUI();
+  showScreen('sessionScreen');
+}
+function updateSessUI(){
+  const ph=sessionPhases[sessCurPhase];
+  document.getElementById('sessPhaseTag').textContent=ph.tag;
+  document.getElementById('sessInstruction').textContent=ph.instructions[sessInstrIdx];
+  sessionPhases.forEach((_,i)=>{
+    const m=document.getElementById('mini'+i);
+    if(!m)return;
+    m.className='mini-phase'+(i<sessCurPhase?' done':i===sessCurPhase?' active':'');
+  });
+}
+function toggleSession(){
+  sessPlaying=!sessPlaying;
+  const icon=document.getElementById('sessPlayIcon');
+  if(sessPlaying){
+    icon.innerHTML='<div class="sess-ctrl-pause"><span></span><span></span></div>';
+    sessInterval=setInterval(tickSession,1000);
+  }else{
+    icon.innerHTML='<div class="sess-ctrl-play"></div>';
+    clearInterval(sessInterval);
+  }
+}
+function stopSession(){
+  sessPlaying=false;clearInterval(sessInterval);
+  const icon=document.getElementById('sessPlayIcon');
+  if(icon)icon.innerHTML='<div class="sess-ctrl-play"></div>';
+}
+function tickSession(){
+  sessElapsedSecs++;
+  const pct=Math.min(sessElapsedSecs/sessTotal,1);
+  document.getElementById('sessProgFill').style.width=(pct*100)+'%';
+  document.getElementById('sessElapsed').textContent=fmt(sessElapsedSecs);
+  document.getElementById('sessRemaining').textContent=fmt(Math.max(sessTotal-sessElapsedSecs,0));
+  if(sessElapsedSecs%18===0)advanceSessInstruction();
+  if(pct>=1){stopSession();completeSession();}
+}
+function advanceSessInstruction(){
+  const ph=sessionPhases[sessCurPhase];
+  sessInstrIdx=(sessInstrIdx+1)%ph.instructions.length;
+  const el=document.getElementById('sessInstruction');
+  el.style.opacity=0;
+  setTimeout(()=>{el.textContent=ph.instructions[sessInstrIdx];el.style.opacity=1;},400);
+}
+function nextSessPhase(){
+  if(sessCurPhase<sessionPhases.length-1){sessCurPhase++;sessInstrIdx=0;updateSessUI();}
+  else completeSession();
+}
+function prevSessPhase(){
+  if(sessCurPhase>0){sessCurPhase--;sessInstrIdx=0;updateSessUI();}
+}
+function completeSession(){
+  stopSession();
+  document.getElementById('sessMain').style.display='none';
+  const cd=document.getElementById('sessComplete');
+  cd.style.display='flex';
+  document.getElementById('compDur').textContent=Math.round(sessElapsedSecs/60)||20;
+}
+</script>
+</body>
+</html>
